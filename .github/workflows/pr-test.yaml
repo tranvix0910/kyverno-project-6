@@ -19,4 +19,4 @@ jobs:
     - name: Run Kyverno Test
       run: |
         echo "Testing manifests against baseline policies..."
-        kyverno apply ./baseline-policies/ -r ./app-manifests/
+        kyverno apply ./baseline-policies/ -r ./app-manifests/ --detailed-results
