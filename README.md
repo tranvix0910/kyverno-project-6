@@ -29,8 +29,11 @@ Trong Project này, chúng ta sẽ áp dụng các khái niệm nâng cao của 
 Dự án này sử dụng mô hình GitOps theo dạng Mono-repo, bao gồm các thư mục chính:
 
 - **`.github/workflows/`**: Chứa kịch bản CI/CD (GitHub Actions) để tự động kiểm tra (Shift-Left Testing) các file cấu hình bằng Kyverno CLI mỗi khi có Pull Request.
+
 - **`baseline-policies/`**: Chứa toàn bộ các chuẩn mực bảo mật và vận hành (Kyverno ClusterPolicies). Đây là các rào chắn (Guardrails) của hệ thống.
+
 - **`app-manifests/`**: Chứa các file cấu hình ứng dụng của team Dev (như Pod, Deployment, Service) và cả các ngoại lệ (như `policy-exception.yaml` và `bad-pod.yaml`).
+
 - **`argocd-apps/`**: Chứa các khai báo `Application` của ArgoCD để tự động đồng bộ mã nguồn từ Git vào Kubernetes Cluster.
 
 ### Sơ đồ Luồng hoạt động (Workflow)
@@ -141,6 +144,7 @@ spec:
         namespaces:
         - test-namespace
 ```
+
 File này sẽ được ArgoCD đồng bộ vào Cluster. Kyverno đọc được sẽ cấp "thẻ bài miễn tử" cho `test-app` để bỏ qua rule `validate-registries`.
 
 ---
@@ -148,6 +152,7 @@ File này sẽ được ArgoCD đồng bộ vào Cluster. Kyverno đọc đượ
 ## Hướng Dẫn Sử Dụng (Dành cho DevOps & Dev)
 
 - **Với Developer:** Không cần truy cập trực tiếp vào Cluster. Chỉ cần tạo file YAML ứng dụng, Push lên Git và xem kết quả CI báo lỗi ở dòng nào. Tự sửa và Merge.
+
 - **Với DevOps:** Quản lý tập trung mọi Policy trên Git. Nếu team Dev xin "ngoại lệ", DevOps sẽ tạo một file `PolicyException` đẩy lên Git. Khi test xong, chỉ cần xóa file đó trên Git, hệ thống sẽ trở lại bảo mật 100%.
 
 ---
@@ -160,9 +165,11 @@ File này sẽ được ArgoCD đồng bộ vào Cluster. Kyverno đọc đượ
 
 1. File `app-manifests/bad-pod.yaml` cố tình cấu hình thiếu label và xài sai image.
 2. Khi CI chạy lệnh:
-   ```bash
-   kyverno apply ./baseline-policies/ -r ./app-manifests/bad-pod.yaml
-   ```
+
+```bash
+kyverno apply ./baseline-policies/ -r ./app-manifests/bad-pod.yaml
+```
+
 **Kết quả mong đợi:** Lệnh trả về mã lỗi (Exit code > 0) kèm thông báo rõ ràng "Thiếu label app" và "Unknown image registry", ngăn chặn việc Merge code.
 
 ### Test Case 2: GitOps Sync & Admission Block
@@ -170,7 +177,9 @@ File này sẽ được ArgoCD đồng bộ vào Cluster. Kyverno đọc đượ
 **Mục tiêu:** Cố tình đưa file lỗi vào Cluster bằng ArgoCD/Flux và xem Kyverno chặn đứng.
 
 1. Tắt CI (Bypass CI) và ép Merge đoạn code lỗi (file `bad-pod.yaml`) vào nhánh `main`.
+
 2. Theo dõi giao diện ArgoCD tiến hành Sync thư mục `app-manifests/`.
+
 **Kết quả mong đợi:** ArgoCD báo trạng thái `Sync Failed` cho `bad-pod`. Khi xem chi tiết (Events), sẽ thấy thông báo từ Kyverno Webhook: `admission webhook "validate.kyverno.svc" denied the request...`
 
 ### Test Case 3: Châm chước tinh tế với PolicyException
@@ -187,7 +196,9 @@ File này sẽ được ArgoCD đồng bộ vào Cluster. Kyverno đọc đượ
 
 1. **Bật tính năng PolicyException:**
    Tính năng `PolicyException` yêu cầu cài đặt Helm chart: `enablePolicyException: true` (hoặc `enablePolicyException` cho container args) trong Kyverno.
+
 2. **Kỷ luật GitOps:**
    Khi đã dùng GitOps, **TUYỆT ĐỐI KHÔNG** được dùng lệnh `kubectl edit clusterpolicy` trực tiếp trên Cluster. Kyverno và ArgoCD sẽ "đánh nhau" (ArgoCD sẽ tự động đè lại thay đổi của bạn để duy trì chuẩn trên Git do tính năng Self-Heal).
+
 3. **Phân quyền Repo:**
    Thư mục `baseline-policies/` và `argocd-apps/` phải được bảo vệ nghiêm ngặt. Chỉ có DevOps lead hoặc Security team mới có quyền Approve (duyệt PR) cho các thay đổi trong thư mục này.

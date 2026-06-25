@@ -1,7 +1,7 @@
 name: Kyverno PR Test
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   validate-manifests:
