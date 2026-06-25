@@ -6,8 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/your-org/your-repo.git' # Thay bằng link Git chứa code
-    targetRevision: main
+    repoURL: 'https://github.com/tranvix0910/kyverno-project-6.git'
+    targetRevision: master
     path: baseline-policies # Trỏ vào thư mục chứa Kyverno Policies
   destination:
     server: 'https://kubernetes.default.svc' # Triển khai trên chính cụm nội bộ
