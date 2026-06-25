@@ -3,6 +3,7 @@ kind: ClusterCleanupPolicy
 metadata:
   name: cleanup-ephemeral
 spec:
+  schedule: "*/5 * * * *"
   match:
     any:
     - resources:
